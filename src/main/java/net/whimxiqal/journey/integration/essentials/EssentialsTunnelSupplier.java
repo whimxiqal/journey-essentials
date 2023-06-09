@@ -29,13 +29,16 @@ import com.earth2me.essentials.api.IWarps;
 import com.earth2me.essentials.commands.WarpNotFoundException;
 import com.earth2me.essentials.spawn.IEssentialsSpawn;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import net.ess3.api.InvalidWorldException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.TunnelSupplier;
 import net.whimxiqal.journey.bukkit.JourneyBukkitApi;
@@ -49,10 +52,15 @@ public class EssentialsTunnelSupplier implements TunnelSupplier {
 
   @Override
   @SuppressWarnings("deprecation")
-  public Collection<Tunnel> tunnels(JourneyPlayer player) {
+  public Collection<Tunnel> tunnels(JourneyAgent agent) {
+    Optional<Cell> location = agent.location();
+    if (location.isEmpty()) {
+      return Collections.emptyList();
+    }
     List<Tunnel> tunnels = new LinkedList<>();
     IEssentials essentials = JourneyEssentials.essentials();
     JourneyBukkitApi journeyBukkit = JourneyBukkitApiProvider.get();
+
 
     // Warps
     IWarps warps = essentials.getWarps();
@@ -60,9 +68,9 @@ public class EssentialsTunnelSupplier implements TunnelSupplier {
         .stream()
         .map(warp -> {
           try {
-            return Tunnel.builder(player.location(), journeyBukkit.toCell(warps.getWarp(warp)))
+            return Tunnel.builder(location.get(), journeyBukkit.toCell(warps.getWarp(warp)))
                 .permission("essentials.warp")
-                .prompt(() -> player.audience().sendMessage(teleportMessage(warp, "/warp " + warp)))
+                .prompt(() -> agent.audience().sendMessage(teleportMessage(warp, "/warp " + warp)))
                 .cost(TELEPORT_COST)
                 .build();
           } catch (WarpNotFoundException | InvalidWorldException e) {
@@ -75,13 +83,13 @@ public class EssentialsTunnelSupplier implements TunnelSupplier {
         .forEach(tunnels::add);
 
     // Homes
-    User user = essentials.getUser(player.uuid());
+    User user = essentials.getUser(agent.uuid());
     if (user.hasValidHomes()) {
       List<String> homes = user.getHomes();
       homes.stream()
-          .map(home -> Tunnel.builder(player.location(), journeyBukkit.toCell(user.getHome(home)))
+          .map(home -> Tunnel.builder(location.get(), journeyBukkit.toCell(user.getHome(home)))
               .permission("essentials.home")
-              .prompt(() -> player.audience().sendMessage(teleportMessage(home, "/home" + (homes.size() == 1 ? "" : " " + home))))
+              .prompt(() -> agent.audience().sendMessage(teleportMessage(home, "/home" + (homes.size() == 1 ? "" : " " + home))))
               .cost(TELEPORT_COST)
               .build())
           .forEach(tunnels::add);
@@ -92,9 +100,9 @@ public class EssentialsTunnelSupplier implements TunnelSupplier {
       if (!(plugin instanceof IEssentialsSpawn)) {
         throw new RuntimeException("EssentialsSpawn class could not be found");
       }
-      tunnels.add(Tunnel.builder(player.location(), journeyBukkit.toCell(((IEssentialsSpawn) plugin).getSpawn(user.getGroup())))
+      tunnels.add(Tunnel.builder(location.get(), journeyBukkit.toCell(((IEssentialsSpawn) plugin).getSpawn(user.getGroup())))
           .permission("essentials.spawn")
-          .prompt(() -> player.audience().sendMessage(teleportMessage("spawn", "/spawn")))
+          .prompt(() -> agent.audience().sendMessage(teleportMessage("spawn", "/spawn")))
           .cost(TELEPORT_COST)
           .build());
     }
