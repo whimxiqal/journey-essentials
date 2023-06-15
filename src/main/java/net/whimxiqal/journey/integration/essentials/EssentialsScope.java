@@ -27,7 +27,6 @@ import com.earth2me.essentials.IEssentials;
 import com.earth2me.essentials.User;
 import com.earth2me.essentials.commands.WarpNotFoundException;
 import com.earth2me.essentials.spawn.IEssentialsSpawn;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,11 +46,6 @@ public class EssentialsScope implements Scope {
   @Override
   public Component name() {
     return Component.text("Essentials");
-  }
-
-  @Override
-  public List<Component> description() {
-    return Collections.emptyList();
   }
 
   @Override
