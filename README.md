@@ -1,4 +1,4 @@
-# Journey Integrator
+# JourneyEssentials
 
 A Minecraft plugin that connects [EssentialsX and EssentialsXSpawn](https://essentialsx.net/) to [Journey](https://github.com/whimxiqal/journey).
 
